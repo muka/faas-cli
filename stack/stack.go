@@ -18,7 +18,7 @@ import (
 
 const providerName = "faas"
 
-// ParseYAMLData parse YAML file into a stack of "services".
+// ParseYAMLFile parse YAML file into a stack of "services".
 func ParseYAMLFile(yamlFile, regex, filter string) (*Services, error) {
 	var err error
 	var fileData []byte
