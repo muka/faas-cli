@@ -86,7 +86,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(services.Functions) > 0 {
-		return build(&services, parallel, shrinkwrap)
+		return BuildStack(&services, parallel, shrinkwrap)
 	}
 
 	if len(image) == 0 {
@@ -105,7 +105,8 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func build(services *stack.Services, queueDepth int, shrinkwrap bool) error {
+//BuildStack build a stack of functions
+func BuildStack(services *stack.Services, queueDepth int, shrinkwrap bool) error {
 	wg := sync.WaitGroup{}
 
 	workChannel := make(chan stack.Function)
