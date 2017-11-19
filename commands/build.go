@@ -62,7 +62,7 @@ via flags.`,
   faas-cli build -f ./samples.yml --no-cache
   faas-cli build -f ./samples.yml --filter "*gif*"
   faas-cli build -f ./samples.yml --regex "fn[0-9]_.*"
-  faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
+  faas-cli build --image=my_image --lang=python --handler=/path/to/fn/
                  --name=my_fn --squash`,
 	RunE: runBuild,
 }
@@ -86,31 +86,37 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(services.Functions) > 0 {
-		build(&services, parallel, shrinkwrap)
-	} else {
-		if len(image) == 0 {
-			return fmt.Errorf("please provide a valid --image name for your Docker image")
-		}
-		if len(handler) == 0 {
-			return fmt.Errorf("please provide the full path to your function's handler")
-		}
-		if len(functionName) == 0 {
-			return fmt.Errorf("please provide the deployed --name of your function")
-		}
-		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap)
+		return build(&services, parallel, shrinkwrap)
+	}
+
+	if len(image) == 0 {
+		return fmt.Errorf("please provide a valid --image name for your Docker image")
+	}
+	if len(handler) == 0 {
+		return fmt.Errorf("please provide the full path to your function's handler")
+	}
+	if len(functionName) == 0 {
+		return fmt.Errorf("please provide the deployed --name of your function")
+	}
+	if err := builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
+func build(services *stack.Services, queueDepth int, shrinkwrap bool) error {
 	wg := sync.WaitGroup{}
 
 	workChannel := make(chan stack.Function)
-
+	var buildErr error
 	for i := 0; i < queueDepth; i++ {
 
 		go func(index int) {
+			// interrupt build
+			if buildErr != nil {
+				return
+			}
 			wg.Add(1)
 			for function := range workChannel {
 				fmt.Printf("[%d] > Building: %s.\n", index, function.Name)
@@ -118,7 +124,9 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 					fmt.Println("Please provide a valid --lang or 'Dockerfile' for your function.")
 
 				} else {
-					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)
+					if err := builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap); err != nil {
+						buildErr = err
+					}
 				}
 			}
 
@@ -128,6 +136,9 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 	}
 
 	for k, function := range services.Functions {
+		if buildErr != nil {
+			break
+		}
 		if function.SkipBuild {
 			fmt.Printf("Skipping build of: %s.\n", function.Name)
 		} else {
@@ -140,16 +151,17 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 
 	wg.Wait()
 
+	return buildErr
 }
 
 // PullTemplates pulls templates from Github from the master zip download file.
-func PullTemplates(templateUrl string) error {
+func PullTemplates(templateURL string) error {
 	var err error
 	exists, err := os.Stat("./template")
 	if err != nil || exists == nil {
 		log.Println("No templates found in current directory.")
 
-		err = fetchTemplates(templateUrl, false)
+		err = fetchTemplates(templateURL, false)
 		if err != nil {
 			log.Println("Unable to download templates from Github.")
 			return err

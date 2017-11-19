@@ -14,7 +14,7 @@ import (
 )
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool) {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool) error {
 
 	if stack.IsValidTemplate(language) {
 
@@ -24,7 +24,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 			if shrinkwrap {
 				fmt.Printf("Nothing to do for: %s.\n", functionName)
 
-				return
+				return nil
 			}
 
 			tempPath = handler
@@ -32,7 +32,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 				fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
 				fmt.Printf("Image: %s not built.\n", image)
 
-				return
+				return nil
 			}
 			fmt.Printf("Building: %s with Dockerfile. Please wait..\n", image)
 
@@ -44,7 +44,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 			if shrinkwrap {
 				fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
 
-				return
+				return nil
 			}
 		}
 
@@ -54,8 +54,10 @@ func BuildImage(image string, handler string, functionName string, language stri
 		fmt.Printf("Image: %s built.\n", image)
 
 	} else {
-		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
+		return fmt.Errorf("Language template: %s not supported. Build a custom Dockerfile instead", language)
 	}
+
+	return nil
 }
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with language template
