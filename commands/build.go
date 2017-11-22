@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 	"sync"
-
+	"path/filepath"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -158,7 +158,7 @@ func BuildStack(services *stack.Services, queueDepth int, shrinkwrap bool) error
 // PullTemplates pulls templates from Github from the master zip download file.
 func PullTemplates(templateURL string) error {
 	var err error
-	exists, err := os.Stat("./template")
+	exists, err := os.Stat(filepath.Join(os.Getenv("workdir"),"./template"))
 	if err != nil || exists == nil {
 		log.Println("No templates found in current directory.")
 

@@ -22,6 +22,7 @@ var (
 	yamlFile string
 	regex    string
 	filter   string
+	workDir  string
 )
 
 // Flags that are to be added to subset of commands.
@@ -43,6 +44,7 @@ func init() {
 	faasCmd.PersistentFlags().StringVarP(&yamlFile, "yaml", "f", "", "Path to YAML file describing function(s)")
 	faasCmd.PersistentFlags().StringVarP(&regex, "regex", "", "", "Regex to match with function names in YAML file")
 	faasCmd.PersistentFlags().StringVarP(&filter, "filter", "", "", "Wildcard to match with function names in YAML file")
+	faasCmd.PersistentFlags().StringVarP(&workDir, "workdir", "", "./", "Base directory where to store templates and build output")
 
 	// Set Bash completion options
 	validYAMLFilenames := []string{"yaml", "yml"}

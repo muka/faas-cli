@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/openfaas/faas-cli/stack"
@@ -62,7 +63,12 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with language template
 func createBuildTemplate(functionName string, handler string, language string) string {
-	tempPath := fmt.Sprintf("./build/%s/", functionName)
+	tempPath := filepath.Join(
+		os.Getenv("workdir"),
+		"./build",
+		functionName,
+	)
+
 	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
 
 	clearErr := os.RemoveAll(tempPath)
@@ -70,19 +76,20 @@ func createBuildTemplate(functionName string, handler string, language string) s
 		fmt.Printf("Error clearing temporary build folder %s\n", tempPath)
 	}
 
-	fmt.Printf("Preparing %s %s\n", handler+"/", tempPath+"function")
+	functionPath := filepath.Join(tempPath, "/function")
 
-	functionPath := tempPath + "/function"
+	fmt.Printf("Preparing %s %s\n", handler+"/", functionPath)
+
 	mkdirErr := os.MkdirAll(functionPath, 0700)
 	if mkdirErr != nil {
 		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
 	}
 
 	// Drop in directory tree from template
-	CopyFiles("./template/"+language, tempPath, true)
+	CopyFiles(filepath.Join(os.Getenv("workdir"), "./template", language), tempPath, true)
 
 	// Overlay in user-function
-	CopyFiles(handler, tempPath+"function/", true)
+	CopyFiles(handler, tempPath+"/function/", true)
 
 	return tempPath
 }
@@ -98,12 +105,10 @@ func CopyFiles(src string, destination string, recursive bool) {
 	for _, file := range files {
 
 		if file.IsDir() == false {
-
-			cp(src+"/"+file.Name(), destination+file.Name())
-
+			cp(filepath.Join(src, file.Name()), filepath.Join(destination, file.Name()))
 		} else {
 			//make new destination dir
-			newDir := destination + file.Name() + "/"
+			newDir := filepath.Join(destination, file.Name())
 
 			if !pathExists(newDir) {
 
@@ -118,7 +123,7 @@ func CopyFiles(src string, destination string, recursive bool) {
 			//did the call ask to recurse into sub directories?
 			if recursive == true {
 				//call CopyFiles to copy the contents
-				CopyFiles(src+"/"+file.Name(), newDir, true)
+				CopyFiles(filepath.Join(src, file.Name()), newDir, true)
 			}
 		}
 	}

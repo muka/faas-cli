@@ -20,9 +20,10 @@ import (
 
 const (
 	defaultTemplateRepository = "https://github.com/openfaas/faas-cli"
-	templateDirectory         = "./template/"
 	rootLanguageDirSplitCount = 3
 )
+
+var templateDirectory = filepath.Join(os.Getenv("workdir"), "./template/")
 
 type extractAction int
 
@@ -88,6 +89,8 @@ func expandTemplatesFromZip(archivePath string, overwrite bool) ([]string, []str
 		}
 
 		action, language, isDirectory := canExpandTemplateData(availableLanguages, relativePath)
+
+		relativePath = filepath.Join(os.Getenv("workdir"), relativePath)
 
 		var expandFromZip bool
 
@@ -176,7 +179,7 @@ func fetchMasterZip(templateURL string) (string, error) {
 
 	templateURL = strings.TrimRight(templateURL, "/")
 	templateURL = templateURL + "/archive/master.zip"
-	archive := "master.zip"
+	archive := filepath.Join(os.Getenv("workdir"), "master.zip")
 
 	if _, err := os.Stat(archive); err != nil {
 		timeout := 120 * time.Second
@@ -235,7 +238,8 @@ func writeFile(rc io.ReadCloser, size uint64, relativePath string, perms os.File
 
 func createPath(relativePath string, perms os.FileMode) error {
 	dir := filepath.Dir(relativePath)
-	err := os.MkdirAll(dir, perms)
+	//HACK using 0755 to avoid weird permission errors
+	err := os.MkdirAll(dir, 0755)
 	return err
 }
 

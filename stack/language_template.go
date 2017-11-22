@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
@@ -49,11 +50,16 @@ func ParseYAMLDataForLanguageTemplate(fileData []byte) (*LanguageTemplate, error
 }
 
 func IsValidTemplate(lang string) bool {
+	templatePath := filepath.Join(
+		os.Getenv("workdir"),
+		"./template",
+		lang,
+	)
 	var found bool
 	if strings.ToLower(lang) == "dockerfile" {
 		found = true
-	} else if _, err := os.Stat("./template/" + lang); err == nil {
-		templateYAMLPath := "./template/" + lang + "/template.yml"
+	} else if _, err := os.Stat(templatePath); err == nil {
+		templateYAMLPath := templatePath + "/template.yml"
 
 		_, err := ParseYAMLForLanguageTemplate(templateYAMLPath)
 		if err == nil {
