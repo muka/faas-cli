@@ -22,6 +22,22 @@ var (
 	shrinkwrap bool
 )
 
+//BuildArguments a set of arguments used for build
+type BuildArguments struct {
+	YamlFile    string
+	Regex       string
+	Filter      string
+	Network     string
+	Image string
+	Handler string
+	FunctionName string
+	Language string
+	Nocache    bool
+	Squash     bool
+	Parallel   int
+	Shrinkwrap bool
+}
+
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	buildCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
@@ -68,10 +84,29 @@ via flags.`,
 }
 
 func runBuild(cmd *cobra.Command, args []string) error {
+	bargs := BuildArguments{
+		YamlFile: yamlFile,
+		Regex: regex,
+		Filter: filter,
+		Network: network,
+		Image: image,
+		Handler: handler,
+		FunctionName: functionName,
+		Language: language,
+		Nocache: nocache,
+		Squash: squash,
+		Parallel: parallel,
+		Shrinkwrap: shrinkwrap,
+	}
+	return Build(bargs)
+}
+
+//Build one or more functions
+func Build(arg BuildArguments) error {
 
 	var services stack.Services
-	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
+	if len(arg.YamlFile) > 0 {
+		parsedServices, err := stack.ParseYAMLFile(arg.YamlFile, arg.Regex, arg.Filter)
 		if err != nil {
 			return err
 		}
@@ -86,19 +121,27 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(services.Functions) > 0 {
-		return BuildStack(&services, parallel, shrinkwrap)
+		return BuildStack(&services, arg.Parallel, arg.Shrinkwrap)
 	}
 
-	if len(image) == 0 {
+	if len(arg.Image) == 0 {
 		return fmt.Errorf("please provide a valid --image name for your Docker image")
 	}
-	if len(handler) == 0 {
+	if len(arg.Handler) == 0 {
 		return fmt.Errorf("please provide the full path to your function's handler")
 	}
-	if len(functionName) == 0 {
+	if len(arg.FunctionName) == 0 {
 		return fmt.Errorf("please provide the deployed --name of your function")
 	}
-	if err := builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap); err != nil {
+	if err := builder.BuildImage(
+		arg.Image,
+		arg.Handler,
+		arg.FunctionName,
+		arg.Language,
+		arg.Nocache,
+		arg.Squash,
+		arg.Shrinkwrap,
+	); err != nil {
 		return err
 	}
 

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -26,6 +27,21 @@ var (
 	secrets     []string
 	labelOpts   []string
 )
+
+//DeployArguments contains flag used to deploy a function
+type DeployArguments struct {
+	YamlFile    string
+	Regex       string
+	Filter      string
+	Network     string
+	EnvvarOpts  []string
+	Replace     bool
+	Update      bool
+	Constraints []string
+	Secrets     []string
+	LabelOpts   []string
+}
+
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
@@ -92,8 +108,25 @@ via flags. Note: --replace and --update are mutually exclusive.`,
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
+	dargs := DeployArguments{
+		YamlFile: yamlFile,
+		Regex: regex,
+		Filter: filter,
+		Network: network,
+		EnvvarOpts:  envvarOpts,
+		Replace:     replace,
+		Update:      update,
+		Constraints: constraints,
+		Secrets:     secrets,
+		LabelOpts:   labelOpts,
+	}
+	return Deploy(dargs)
+}
 
-	if update && replace {
+//Deploy a function
+func Deploy(args DeployArguments) error {
+
+	if args.Update && args.Replace {
 		fmt.Println(`Cannot specify --update and --replace at the same time.
   --replace    removes an existing deployment before re-creating it
   --update     provides a rolling update to a new function image or configuration`)
@@ -101,8 +134,8 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	}
 
 	var services stack.Services
-	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
+	if len(args.YamlFile) > 0 {
+		parsedServices, err := stack.ParseYAMLFile(args.YamlFile, args.Regex, args.Filter)
 		if err != nil {
 			return err
 		}
@@ -110,8 +143,8 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 		parsedServices.Provider.GatewayURL = getGatewayURL(gateway, defaultGateway, parsedServices.Provider.GatewayURL)
 
 		// Override network if passed
-		if len(network) > 0 && network != defaultNetwork {
-			parsedServices.Provider.Network = network
+		if len(args.Network) > 0 && args.Network != defaultNetwork {
+			parsedServices.Provider.Network = args.Network
 		}
 
 		if parsedServices != nil {
@@ -127,7 +160,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 		for k, function := range services.Functions {
 
 			function.Name = k
-			if update {
+			if args.Update {
 				fmt.Printf("Updating: %s.\n", function.Name)
 			} else {
 				fmt.Printf("Deploying: %s.\n", function.Name)
@@ -136,8 +169,8 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 			var functionConstraints []string
 			if function.Constraints != nil {
 				functionConstraints = *function.Constraints
-			} else if len(constraints) > 0 {
-				functionConstraints = constraints
+			} else if len(args.Constraints) > 0 {
+				functionConstraints = args.Constraints
 			}
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
@@ -150,14 +183,14 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 				labelMap = *function.Labels
 			}
 
-			labelArgumentMap, labelErr := parseMap(labelOpts, "label")
+			labelArgumentMap, labelErr := parseMap(args.LabelOpts, "label")
 			if labelErr != nil {
 				return fmt.Errorf("error parsing labels: %v", labelErr)
 			}
 
 			allLabels := mergeMap(labelMap, labelArgumentMap)
 
-			allEnvironment, envErr := compileEnvironment(envvarOpts, function.Environment, fileEnvironment)
+			allEnvironment, envErr := compileEnvironment(args.EnvvarOpts,function.Environment,fileEnvironment)
 			if envErr != nil {
 				return envErr
 			}
@@ -176,7 +209,21 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 				Requests: function.Requests,
 			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, functionConstraints, update, secrets, allLabels, functionResourceRequest1)
+			proxy.DeployFunction(
+				function.FProcess,
+				services.Provider.GatewayURL,
+				function.Name,
+				function.Image,
+				function.Language,
+				args.Replace,
+				allEnvironment,
+				services.Provider.Network,
+				functionConstraints,
+				args.Update,
+				args.Secrets,
+				allLabels,
+				functionResourceRequest1,
+			)
 		}
 	} else {
 		if len(image) == 0 {
@@ -186,17 +233,31 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("please provide a --name for your function as it will be deployed on FaaS")
 		}
 
-		envvars, err := parseMap(envvarOpts, "env")
+		envvars, err := parseMap(args.EnvvarOpts, "env")
 		if err != nil {
 			return fmt.Errorf("error parsing envvars: %v", err)
 		}
 
-		labelMap, labelErr := parseMap(labelOpts, "label")
+		labelMap, labelErr := parseMap(args.LabelOpts, "label")
 		if labelErr != nil {
 			return fmt.Errorf("error parsing labels: %v", labelErr)
 		}
 		functionResourceRequest1 := proxy.FunctionResourceRequest{}
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap, functionResourceRequest1)
+		proxy.DeployFunction(
+			fprocess,
+			gateway,
+			functionName,
+			image,
+			language,
+			args.Replace,
+			envvars,
+			args.Network,
+			args.Constraints,
+			args.Update,
+			args.Secrets,
+			labelMap,
+			functionResourceRequest1,
+		)
 	}
 
 	return nil
@@ -298,7 +359,7 @@ func compileEnvironment(envvarOpts []string, yamlEnvironment map[string]string, 
 func deriveFprocess(function stack.Function) (string, error) {
 	var fprocess string
 
-	pathToTemplateYAML := "./template/" + function.Language + "/template.yml"
+	pathToTemplateYAML := filepath.Join(os.Getenv("workdir"), "template", function.Language, "template.yml")
 	if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
 		return "", err
 	}

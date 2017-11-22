@@ -261,7 +261,7 @@ func canWriteLanguage(availableLanguages map[string]bool, language string, overw
 
 // Takes a language input (e.g. "node"), tells whether or not it is OK to download
 func templateFolderExists(language string, overwrite bool) bool {
-	dir := templateDirectory + language
+	dir := filepath.Join(templateDirectory, language)
 	if _, err := os.Stat(dir); err == nil && !overwrite {
 		// The directory template/language/ exists
 		return false
