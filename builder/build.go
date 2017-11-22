@@ -89,7 +89,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	CopyFiles(filepath.Join(os.Getenv("workdir"), "./template", language), tempPath, true)
 
 	// Overlay in user-function
-	CopyFiles(handler, tempPath+"/function/", true)
+	CopyFiles(handler, functionPath, true)
 
 	return tempPath
 }
