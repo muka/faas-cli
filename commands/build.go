@@ -24,6 +24,7 @@ var (
 
 //BuildArguments a set of arguments used for build
 type BuildArguments struct {
+	Services    *stack.Services
 	YamlFile    string
 	Regex       string
 	Filter      string
@@ -105,14 +106,18 @@ func runBuild(cmd *cobra.Command, args []string) error {
 func Build(arg BuildArguments) error {
 
 	var services stack.Services
-	if len(arg.YamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(arg.YamlFile, arg.Regex, arg.Filter)
-		if err != nil {
-			return err
-		}
+	if arg.Services != nil {
+		services = *arg.Services
+	} else {
+		if len(arg.YamlFile) > 0 {
+			parsedServices, err := stack.ParseYAMLFile(arg.YamlFile, arg.Regex, arg.Filter)
+			if err != nil {
+				return err
+			}
 
-		if parsedServices != nil {
-			services = *parsedServices
+			if parsedServices != nil {
+				services = *parsedServices
+			}
 		}
 	}
 
