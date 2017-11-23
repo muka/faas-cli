@@ -36,6 +36,25 @@ var (
 	language     string
 )
 
+//FaasArguments contains flags for all commands
+type FaasArguments struct {
+	YamlFile string
+	Regex    string
+	Filter   string
+	WorkDir  string
+}
+
+//SharedArguments contains flags for subset of commands
+type SharedArguments struct {
+	Fprocess     string
+	FunctionName string
+	Network      string
+	Gateway      string
+	Handler      string
+	Image        string
+	Language     string
+}
+
 var stat = func(filename string) (os.FileInfo, error) {
 	return os.Stat(filename)
 }

@@ -24,15 +24,9 @@ var (
 
 //BuildArguments a set of arguments used for build
 type BuildArguments struct {
+	FaasArguments
+	SharedArguments
 	Services    *stack.Services
-	YamlFile    string
-	Regex       string
-	Filter      string
-	Network     string
-	Image string
-	Handler string
-	FunctionName string
-	Language string
 	Nocache    bool
 	Squash     bool
 	Parallel   int
@@ -86,14 +80,18 @@ via flags.`,
 
 func runBuild(cmd *cobra.Command, args []string) error {
 	bargs := BuildArguments{
-		YamlFile: yamlFile,
-		Regex: regex,
-		Filter: filter,
-		Network: network,
-		Image: image,
-		Handler: handler,
-		FunctionName: functionName,
-		Language: language,
+		FaasArguments: FaasArguments{
+			YamlFile: yamlFile,
+			Regex: regex,
+			Filter: filter,
+		},
+		SharedArguments: SharedArguments{
+			Network: network,
+			Image: image,
+			Handler: handler,
+			FunctionName: functionName,
+			Language: language,
+		},
 		Nocache: nocache,
 		Squash: squash,
 		Parallel: parallel,

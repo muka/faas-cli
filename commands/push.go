@@ -12,6 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type PushArguments struct {
+	
+}
+
 func init() {
 	faasCmd.AddCommand(pushCmd)
 
@@ -36,6 +40,12 @@ These container images must already be present in your local image cache.`,
 }
 
 func runPush(cmd *cobra.Command, args []string) error {
+	return Push(PushArguments{
+
+	})
+}
+
+func Push(arg PushArguments) error {
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
