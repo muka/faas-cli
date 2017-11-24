@@ -9,12 +9,14 @@ import (
 	"testing"
 )
 
+const testdataPath = "../test/testdata/master_test.zip"
+
 func Test_PullTemplates(t *testing.T) {
 	defer tearDownFetchTemplates(t)
 
 	// Create fake server for testing.
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "testdata/master_test.zip")
+		http.ServeFile(w, r, testdataPath)
 	}))
 	defer ts.Close()
 
@@ -31,7 +33,7 @@ func Test_fetchTemplates(t *testing.T) {
 
 	// Create fake server for testing.
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "testdata/master_test.zip")
+		http.ServeFile(w, r, testdataPath)
 	}))
 	defer ts.Close()
 
