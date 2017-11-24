@@ -61,8 +61,8 @@ func Execute(customArgs []string) {
 
 func checkAndSetDefaultYaml() {
 	// Check if there is a default yaml file and set it
-	if _, err := stat(defaultYAML); err == nil {
-		yamlFile = defaultYAML
+	if _, err := stat(DefaultYAML); err == nil {
+		yamlFile = DefaultYAML
 	}
 }
 

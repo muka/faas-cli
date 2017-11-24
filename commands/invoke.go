@@ -10,6 +10,8 @@ import (
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/api"
+	"github.com/openfaas/faas-cli/options"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +23,7 @@ var (
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	invokeCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
-	invokeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	invokeCmd.Flags().StringVarP(&gateway, "gateway", "g", deploy.DefaultGateway, "Gateway URL starting with http(s)://")
 
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
 	invokeCmd.Flags().StringArrayVar(&query, "query", []string{}, "pass query-string options")
@@ -40,27 +42,11 @@ var invokeCmd = &cobra.Command{
 }
 
 func runInvoke(cmd *cobra.Command, args []string) error {
-	var services stack.Services
 
-	if len(args) < 1 {
-		return fmt.Errorf("please provide a name for the function")
+	functionName := ""
+	if len(args) > 0 {
+		functionName = args[0]
 	}
-	var yamlGateway string
-	functionName = args[0]
-
-	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
-		if err != nil {
-			return err
-		}
-
-		if parsedServices != nil {
-			services = *parsedServices
-			yamlGateway = services.Provider.GatewayURL
-		}
-	}
-
-	gatewayAddress := getGatewayURL(gateway, defaultGateway, yamlGateway)
 
 	stat, _ := os.Stdin.Stat()
 	if (stat.Mode() & os.ModeCharDevice) != 0 {
@@ -72,14 +58,24 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to read standard input: %s", err.Error())
 	}
 
-	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query)
-	if err != nil {
-		return err
-	}
+	response, err := api.Invoke(options.InvokeOptions{
+		FaasOptions: options.FaasOptions {
+			YamlFile: yamlFile,
+			Regex: regex,
+			Filter: filter,
+		},
+		SharedOptions: options.SharedOptions {
+			Gateway: gateway,
+		},
+		ContentType: contentType,
+		Query: query,
+		FunctionName: functionName,
+		Input: functionInput,
+	})
 
 	if response != nil {
 		os.Stdout.Write(*response)
 	}
 
-	return nil
+	return err
 }

@@ -1,6 +1,7 @@
 // Copyright (c) Alex Ellis 2017. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-package deploy
+
+package api
 
 import (
 	"fmt"
@@ -14,12 +15,6 @@ import (
 	"github.com/openfaas/faas-cli/options"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
-)
-
-const (
-	DefaultGateway = "http://localhost:8080"
-	DefaultNetwork = "func_functions"
-	DefaultYAML    = "stack.yml"
 )
 
 //Deploy a function

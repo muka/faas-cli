@@ -4,14 +4,8 @@
 package commands
 
 import (
-	"fmt"
-	"log"
-	"os"
-	"sync"
-	"path/filepath"
-	"github.com/openfaas/faas-cli/builder"
+	"github.com/openfaas/faas-cli/api"
 	"github.com/openfaas/faas-cli/options"
-	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
 )
 
@@ -87,5 +81,5 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		Parallel: parallel,
 		Shrinkwrap: shrinkwrap,
 	}
-	return builder.Build(bargs)
+	return api.Build(bargs)
 }

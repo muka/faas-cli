@@ -1,7 +1,7 @@
 // Copyright (c) Alex Ellis 2017. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-package builder
+package api
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 )
 
@@ -50,8 +51,8 @@ func BuildImage(image string, handler string, functionName string, language stri
 		}
 
 		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
-		ExecCommand(tempPath, builder)
+		cmd := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
+		builder.ExecCommand(tempPath, cmd)
 		fmt.Printf("Image: %s built.\n", image)
 
 	} else {

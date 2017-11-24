@@ -9,15 +9,9 @@ import (
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/options"
 	"github.com/spf13/cobra"
 )
-
-// PushOptions store flags for the push  command
-type PushOptions struct {
-	FaasOptions
-	SharedOptions
-	Parallel int
-}
 
 func init() {
 	faasCmd.AddCommand(pushCmd)
@@ -60,7 +54,7 @@ func runPush(cmd *cobra.Command, args []string) error {
 }
 
 //Push a function to repository
-func Push(arg PushOptions) error {
+func Push(arg options.PushOptions) error {
 
 	var services stack.Services
 	if arg.Services != nil {

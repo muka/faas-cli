@@ -9,6 +9,7 @@ import (
 
 	"github.com/openfaas/faas-cli/options"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/templates"
 )
 
 //Build one or more functions
@@ -127,7 +128,7 @@ func PullTemplates(templateURL string) error {
 	if err != nil || exists == nil {
 		log.Println("No templates found in current directory.")
 
-		err = fetchTemplates(templateURL, false)
+		err = templates.PullTemplates(templateURL)
 		if err != nil {
 			log.Println("Unable to download templates from Github.")
 			return err
