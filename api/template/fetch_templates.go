@@ -1,7 +1,7 @@
 // Copyright (c) Alex Ellis 2017. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-package templates
+package template
 
 import (
 	"archive/zip"
@@ -23,7 +23,10 @@ const (
 	rootLanguageDirSplitCount = 3
 )
 
-var templateDirectory = filepath.Join(os.Getenv("workdir"), "./template/")
+//GetTemplateDirectory return the template directory
+func GetTemplateDirectory() string {
+	return filepath.Join(os.Getenv("workdir"), "./template/")
+}
 
 type extractAction int
 
@@ -34,8 +37,8 @@ const (
 	skipWritingData
 )
 
-// fetchTemplates fetch code templates from GitHub master zip file.
-func fetchTemplates(templateURL string, overwrite bool) error {
+// FetchTemplates fetch code templates from GitHub master zip file.
+func FetchTemplates(templateURL string, overwrite bool) error {
 
 	if len(templateURL) == 0 {
 		templateURL = defaultTemplateRepository
@@ -261,7 +264,7 @@ func canWriteLanguage(availableLanguages map[string]bool, language string, overw
 
 // Takes a language input (e.g. "node"), tells whether or not it is OK to download
 func templateFolderExists(language string, overwrite bool) bool {
-	dir := filepath.Join(templateDirectory, language)
+	dir := filepath.Join(GetTemplateDirectory(), language)
 	if _, err := os.Stat(dir); err == nil && !overwrite {
 		// The directory template/language/ exists
 		return false

@@ -8,11 +8,12 @@ import (
 	"strings"
 
 	"github.com/openfaas/faas-cli/config"
+	"github.com/openfaas/faas-cli/api"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	logoutCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	logoutCmd.Flags().StringVarP(&gateway, "gateway", "g", api.DefaultGateway, "Gateway URL starting with http(s)://")
 
 	faasCmd.AddCommand(logoutCmd)
 }

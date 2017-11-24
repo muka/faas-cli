@@ -8,12 +8,13 @@ import (
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/api"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	removeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	removeCmd.Flags().StringVarP(&gateway, "gateway", "g", api.DefaultGateway, "Gateway URL starting with http(s)://")
 
 	faasCmd.AddCommand(removeCmd)
 }
@@ -51,7 +52,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 
 	if len(services.Functions) > 0 {
 		if len(services.Provider.Network) == 0 {
-			services.Provider.Network = defaultNetwork
+			services.Provider.Network = api.DefaultNetwork
 		}
 
 		for k, function := range services.Functions {

@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"github.com/openfaas/faas-cli/api"
 )
 
 var mockStatParams string
@@ -24,8 +25,8 @@ func TestCallsStatWithDefaulYAMLFileName(t *testing.T) {
 
 	Execute([]string{"help"})
 
-	if mockStatParams != defaultYAML {
-		t.Fatalf("Expected yamlFile to equal %v got %v\n", defaultYAML, yamlFile)
+	if mockStatParams != api.DefaultYAML {
+		t.Fatalf("Expected yamlFile to equal %v got %v\n", api.DefaultYAML, yamlFile)
 	}
 }
 
@@ -34,8 +35,8 @@ func TestLoadsDefaultYAMLWhenPresent(t *testing.T) {
 
 	Execute([]string{"help"})
 
-	if yamlFile != defaultYAML {
-		t.Fatalf("Expected yamlFile to equal %v got %v\n", defaultYAML, yamlFile)
+	if yamlFile != api.DefaultYAML {
+		t.Fatalf("Expected yamlFile to equal %v got %v\n", api.DefaultYAML, yamlFile)
 	}
 }
 

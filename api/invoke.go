@@ -12,21 +12,25 @@ func Invoke(arg options.InvokeOptions) (*[]byte, error) {
 	var services stack.Services
 	var yamlGateway string
 
-	functionName = arg.FunctionName
+	functionName := arg.FunctionName
 
-	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(arg.YamlFile, arg.Regex, arg.Filter)
-		if err != nil {
-			return err
-		}
+	if arg.Services != nil {
+		services = *arg.Services
+	} else {
+		if len(arg.YamlFile) > 0 {
+			parsedServices, err := stack.ParseYAMLFile(arg.YamlFile, arg.Regex, arg.Filter)
+			if err != nil {
+				return nil, err
+			}
 
-		if parsedServices != nil {
-			services = *parsedServices
-			yamlGateway = services.Provider.GatewayURL
+			if parsedServices != nil {
+				services = *parsedServices
+				yamlGateway = services.Provider.GatewayURL
+			}
 		}
 	}
 
-	gatewayAddress := getGatewayURL(arg.Gateway, DefaultGateway, yamlGateway)
+	gatewayAddress := GetGatewayURL(arg.Gateway, DefaultGateway, yamlGateway)
 	functionInput := arg.Input
 
 	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, arg.ContentType, arg.Query)

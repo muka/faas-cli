@@ -37,7 +37,7 @@ func Deploy(arg options.DeployOptions) error {
 				return err
 			}
 
-			parsedServices.Provider.GatewayURL = getGatewayURL(arg.Gateway, DefaultGateway, parsedServices.Provider.GatewayURL)
+			parsedServices.Provider.GatewayURL = GetGatewayURL(arg.Gateway, DefaultGateway, parsedServices.Provider.GatewayURL)
 
 			// Override network if passed
 			if len(arg.Network) > 0 && arg.Network != DefaultNetwork {
@@ -230,7 +230,8 @@ func mergeMap(i map[string]string, j map[string]string) map[string]string {
 	return merged
 }
 
-func getGatewayURL(argumentURL string, defaultURL string, yamlURL string) string {
+//GetGatewayURL return the gateway URL
+func GetGatewayURL(argumentURL string, defaultURL string, yamlURL string) string {
 	var gatewayURL string
 
 	if len(argumentURL) > 0 && argumentURL != defaultURL {

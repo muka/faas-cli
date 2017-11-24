@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/openfaas/faas-cli/api"
 	"github.com/spf13/cobra"
 )
 
@@ -61,8 +62,8 @@ func Execute(customArgs []string) {
 
 func checkAndSetDefaultYaml() {
 	// Check if there is a default yaml file and set it
-	if _, err := stat(DefaultYAML); err == nil {
-		yamlFile = DefaultYAML
+	if _, err := stat(api.DefaultYAML); err == nil {
+		yamlFile = api.DefaultYAML
 	}
 }
 

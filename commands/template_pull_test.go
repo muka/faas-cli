@@ -12,7 +12,11 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"github.com/openfaas/faas-cli/api"
+	"github.com/openfaas/faas-cli/options"
 )
+
+const testdataPath = "../test/testdata/master_test.zip"
 
 func Test_templatePull(t *testing.T) {
 	defer tearDown_fetch_templates(t)
@@ -140,5 +144,56 @@ func Test_repositoryUrlRegExp(t *testing.T) {
 	url = "https://github.com/owner/repo/"
 	if !r.MatchString(url) {
 		t.Errorf("Url %s must be valid", url)
+	}
+}
+
+func Test_PullTemplates(t *testing.T) {
+	defer tearDown_fetch_templates(t)
+
+	// Create fake server for testing.
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, testdataPath)
+	}))
+	defer ts.Close()
+
+	err := api.Pull(options.TemplatePullOptions{
+		URL: ts.URL,
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+}
+
+// tearDown_fetch_templates cleans all files and directories created by the test
+func tearDown_fetch_templates(t *testing.T) {
+
+	// Remove existing archive file if it exists
+	if _, err := os.Stat("template-owner-repo.zip"); err == nil {
+		t.Log("The archive was not deleted")
+
+		err := os.Remove("template-owner-repo.zip")
+		if err != nil {
+			t.Log(err)
+		}
+	}
+
+	// Remove existing templates folder, if it exist
+	if _, err := os.Stat("template/"); err == nil {
+		t.Log("Found a template/ directory, removing it...")
+
+		rerr := os.RemoveAll("template/")
+		if rerr != nil {
+			t.Log(rerr)
+		}
+	} else {
+		t.Logf("Directory template was not created: %s", err)
+	}
+
+	// Verify the downloaded archive
+	archive := "template-owner-repo.zip"
+	if _, err := os.Stat(archive); err == nil {
+		t.Fatalf("The archive %s was not deleted", archive)
 	}
 }

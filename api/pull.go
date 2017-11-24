@@ -1,8 +1,9 @@
-package templates
+package api
 
 import (
 	"fmt"
 
+	"github.com/openfaas/faas-cli/api/template"
 	"github.com/openfaas/faas-cli/options"
 )
 
@@ -10,13 +11,6 @@ import (
 func Pull(arg options.TemplatePullOptions) error {
 	repository := arg.URL
 	fmt.Println("Fetch templates from repository: " + repository)
-	err := fetchTemplates(arg.URL, arg.Overwrite)
+	err := template.FetchTemplates(arg.URL, arg.Overwrite)
 	return err
-}
-
-//PullTemplates fetch templates from an URL
-func PullTemplates(repository string) error {
-	return Pull(options.TemplatePullOptions{
-		URL: repository,
-	})
 }

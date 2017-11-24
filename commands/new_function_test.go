@@ -14,6 +14,7 @@ import (
 
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/test"
+	"github.com/openfaas/faas-cli/api"
 )
 
 const SuccessMsg = `(?m:Function created in folder)`
@@ -32,6 +33,7 @@ const ListOptionOutput = `Languages available as templates:
 - ruby`
 
 const LangNotExistsOutput = `(?m:is unavailable or not supported)`
+const testdataFunction = "../test/testdata/new_function"
 
 type NewFunctionTest struct {
 	title       string
@@ -77,7 +79,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		"new",
 		funcName,
 		"--lang=" + funcLang,
-		"--gateway=" + defaultGateway,
+		"--gateway=" + api.DefaultGateway,
 	}
 
 	faasCmd.SetArgs(cmdParameters)
@@ -103,7 +105,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		services := *parsedServices
 
 		var testServices stack.Services
-		testServices.Provider = stack.Provider{Name: "faas", GatewayURL: defaultGateway}
+		testServices.Provider = stack.Provider{Name: "faas", GatewayURL: api.DefaultGateway}
 		if !reflect.DeepEqual(services.Provider, testServices.Provider) {
 			t.Fatalf("YAML `provider` section was not created correctly for file %s: got %v", funcYAML, services.Provider)
 		}
@@ -125,7 +127,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 func Test_newFunctionTests(t *testing.T) {
 
 	homeDir, _ := filepath.Abs(".")
-	if err := os.Chdir("testdata/new_function"); err != nil {
+	if err := os.Chdir(testdataFunction); err != nil {
 		t.Fatalf("Error on cd to testdata dir: %v", err)
 	}
 
@@ -143,7 +145,7 @@ func Test_newFunctionTests(t *testing.T) {
 func Test_newFunctionListCmds(t *testing.T) {
 
 	homeDir, _ := filepath.Abs(".")
-	if err := os.Chdir("testdata/new_function"); err != nil {
+	if err := os.Chdir(testdataFunction); err != nil {
 		t.Fatalf("Error on cd to testdata dir: %v", err)
 	}
 
@@ -170,7 +172,7 @@ func Test_newFunctionListCmds(t *testing.T) {
 func Test_languageNotExists(t *testing.T) {
 
 	homeDir, _ := filepath.Abs(".")
-	if err := os.Chdir("testdata/new_function"); err != nil {
+	if err := os.Chdir(testdataFunction); err != nil {
 		t.Fatalf("Error on cd to testdata dir: %v", err)
 	}
 
@@ -179,7 +181,7 @@ func Test_languageNotExists(t *testing.T) {
 		"new",
 		"sampleName",
 		"--lang=bash",
-		"--gateway=" + defaultGateway,
+		"--gateway=" + api.DefaultGateway,
 		"--list=false",
 	}
 

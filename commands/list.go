@@ -6,8 +6,8 @@ package commands
 import (
 	"fmt"
 
-	"github.com/openfaas/faas-cli/proxy"
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/api"
+	"github.com/openfaas/faas-cli/options"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +17,7 @@ var (
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	listCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	listCmd.Flags().StringVarP(&gateway, "gateway", "g", api.DefaultGateway, "Gateway URL starting with http(s)://")
 
 	listCmd.Flags().BoolVar(&verboseList, "verbose", false, "Verbose output for the function list")
 
@@ -35,28 +35,17 @@ var listCmd = &cobra.Command{
 }
 
 func runList(cmd *cobra.Command, args []string) error {
-	var services stack.Services
-	var gatewayAddress string
-	var yamlGateway string
-	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
-		if err != nil {
-			return err
-		}
 
-		if parsedServices != nil {
-			services = *parsedServices
-			yamlGateway = services.Provider.GatewayURL
-		}
-	}
-
-	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway)
-
-	functions, err := proxy.ListFunctions(gatewayAddress)
+	functions, err := api.List(options.ListOptions{
+		SharedOptions: options.SharedOptions{
+			Gateway:gateway,
+		},
+		VerboseList:verboseList,
+	})
+	
 	if err != nil {
 		return err
 	}
-
 	if verboseList {
 		fmt.Printf("%-30s\t%-40s\t%-15s\t%-5s\n", "Function", "Image", "Invocations", "Replicas")
 		for _, function := range functions {
@@ -70,8 +59,8 @@ func runList(cmd *cobra.Command, args []string) error {
 		fmt.Printf("%-30s\t%-15s\t%-5s\n", "Function", "Invocations", "Replicas")
 		for _, function := range functions {
 			fmt.Printf("%-30s\t%-15d\t%-5d\n", function.Name, int64(function.InvocationCount), function.Replicas)
-
 		}
 	}
 	return nil
+
 }

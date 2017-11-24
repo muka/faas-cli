@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/openfaas/faas-cli/options"
+	"github.com/openfaas/faas-cli/api"
 )
 
 const (
@@ -64,7 +65,7 @@ func runTemplatePull(cmd *cobra.Command, args []string) {
 	if len(args) > 0 {
 		repository = args[0]
 	}
-	Pull(options.TemplatePullOptions{
+	api.Pull(options.TemplatePullOptions{
 		URL: repository,
 		Overwrite: overwrite,
 	})

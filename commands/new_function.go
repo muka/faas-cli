@@ -13,6 +13,9 @@ import (
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/api"
+	"github.com/openfaas/faas-cli/options"
+	"github.com/openfaas/faas-cli/api/template"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +24,7 @@ var (
 	list bool
 )
 
-// Implement interface for sorting array of strings
+//StrSort Implement interface for sorting array of strings
 type StrSort []string
 
 func (a StrSort) Len() int           { return len(a) }
@@ -30,7 +33,7 @@ func (a StrSort) Less(i, j int) bool { return a[i] < a[j] }
 
 func init() {
 	newFunctionCmd.Flags().StringVar(&lang, "lang", "", "Language or template to use")
-	newFunctionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL to store in YAML stack file")
+	newFunctionCmd.Flags().StringVarP(&gateway, "gateway", "g", api.DefaultGateway, "Gateway URL to store in YAML stack file")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
 
@@ -53,7 +56,7 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 	if list == true {
 		var availableTemplates []string
 
-		if templateFolders, err := ioutil.ReadDir(templateDirectory); err != nil {
+		if templateFolders, err := ioutil.ReadDir(template.GetTemplateDirectory()); err != nil {
 			return fmt.Errorf("no language templates were found. Please run 'faas-cli template pull'")
 		} else {
 			for _, file := range templateFolders {
@@ -81,7 +84,9 @@ the "Dockerfile" lang type in your YAML file.
 		return fmt.Errorf("you must supply a function language with the --lang flag")
 	}
 
-	PullTemplates("")
+	if err := api.Pull(options.TemplatePullOptions{URL: ""}); err != nil {
+		return err
+	}
 
 	if stack.IsValidTemplate(lang) == false {
 		return fmt.Errorf("%s is unavailable or not supported", lang)

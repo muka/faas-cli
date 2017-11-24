@@ -22,12 +22,12 @@ var (
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	deployCmd.Flags().StringVar(&fprocess, "fprocess", "", "Fprocess to be run by the watchdog")
-	deployCmd.Flags().StringVarP(&gateway, "gateway", "g", deploy.DefaultGateway, "Gateway URL starting with http(s)://")
+	deployCmd.Flags().StringVarP(&gateway, "gateway", "g", api.DefaultGateway, "Gateway URL starting with http(s)://")
 	deployCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 	deployCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
 	deployCmd.Flags().StringVar(&language, "lang", "", "Programming language template")
 	deployCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
-	deployCmd.Flags().StringVar(&network, "network", deploy.DefaultNetwork, "Name of the network")
+	deployCmd.Flags().StringVar(&network, "network", api.DefaultNetwork, "Name of the network")
 
 	// Setup flags that are used only by this command (variables defined above)
 	deployCmd.Flags().StringArrayVarP(&envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")

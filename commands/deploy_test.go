@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/openfaas/faas-cli/test"
+	"github.com/openfaas/faas-cli/api"
 )
 
 func Test_getGatewayURL(t *testing.T) {
@@ -59,7 +60,7 @@ func Test_getGatewayURL(t *testing.T) {
 
 	fails := 0
 	for _, testCase := range testCases {
-		url := getGatewayURL(testCase.argumentURL, testCase.defaultURL, testCase.yamlURL)
+		url := api.GetGatewayURL(testCase.argumentURL, testCase.defaultURL, testCase.yamlURL)
 		if url != testCase.expectedURL {
 			t.Logf("gatewayURL %s\nwant: %s, got: %s", testCase.name, testCase.expectedURL, url)
 			fails++
