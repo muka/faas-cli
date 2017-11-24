@@ -1,7 +1,7 @@
 // Copyright (c) Alex Ellis 2017. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-package commands
+package templates
 
 import (
 	"archive/zip"
@@ -88,7 +88,7 @@ func expandTemplatesFromZip(archivePath string, overwrite bool) ([]string, []str
 			continue
 		}
 
-		action, language, isDirectory := canExpandTemplateData(availableLanguages, relativePath)
+		action, language, isDirectory := canExpandTemplateData(availableLanguages, relativePath, overwrite)
 
 		relativePath = filepath.Join(os.Getenv("workdir"), relativePath)
 
@@ -136,7 +136,7 @@ func expandTemplatesFromZip(archivePath string, overwrite bool) ([]string, []str
 
 // canExpandTemplateData returns what we should do with the file in form of ExtractAction enum
 // with the language name and whether it is a directory
-func canExpandTemplateData(availableLanguages map[string]bool, relativePath string) (extractAction, string, bool) {
+func canExpandTemplateData(availableLanguages map[string]bool, relativePath string, overwrite bool) (extractAction, string, bool) {
 	if pathSplit := strings.Split(relativePath, "/"); len(pathSplit) > 2 {
 		language := pathSplit[1]
 

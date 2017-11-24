@@ -1,6 +1,6 @@
 // Copyright (c) Alex Ellis 2017. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-package commands
+package templates
 
 import (
 	"net/http"
@@ -10,7 +10,7 @@ import (
 )
 
 func Test_PullTemplates(t *testing.T) {
-	defer tearDown_fetch_templates(t)
+	defer tearDownFetchTemplates(t)
 
 	// Create fake server for testing.
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -23,11 +23,11 @@ func Test_PullTemplates(t *testing.T) {
 		t.Error(err)
 	}
 
-	tearDown_fetch_templates(t)
+	tearDownFetchTemplates(t)
 }
 
 func Test_fetchTemplates(t *testing.T) {
-	defer tearDown_fetch_templates(t)
+	defer tearDownFetchTemplates(t)
 
 	// Create fake server for testing.
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -40,11 +40,11 @@ func Test_fetchTemplates(t *testing.T) {
 		t.Error(err)
 	}
 
-	tearDown_fetch_templates(t)
+	tearDownFetchTemplates(t)
 }
 
-// tearDown_fetch_templates_test cleans all files and directories created by the test
-func tearDown_fetch_templates(t *testing.T) {
+// tearDownFetchTemplates cleans all files and directories created by the test
+func tearDownFetchTemplates(t *testing.T) {
 
 	// Remove existing archive file if it exists
 	if _, err := os.Stat("template-owner-repo.zip"); err == nil {

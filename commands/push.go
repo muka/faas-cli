@@ -12,13 +12,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type PushArguments struct {
-	
+// PushOptions store flags for the push  command
+type PushOptions struct {
+	FaasOptions
+	SharedOptions
+	Parallel int
 }
 
 func init() {
 	faasCmd.AddCommand(pushCmd)
-
 	pushCmd.Flags().IntVar(&parallel, "parallel", 1, "Push images in parallel to depth specified.")
 }
 
@@ -40,27 +42,44 @@ These container images must already be present in your local image cache.`,
 }
 
 func runPush(cmd *cobra.Command, args []string) error {
-	return Push(PushArguments{
-
+	return Push(PushOptions{
+		FaasOptions: FaasOptions{
+			YamlFile: yamlFile,
+			Regex: regex,
+			Filter: filter,
+		},
+		SharedOptions: SharedOptions{
+			Network: network,
+			Image: image,
+			Handler: handler,
+			FunctionName: functionName,
+			Language: language,
+		},
+		Parallel: parallel,
 	})
 }
 
-func Push(arg PushArguments) error {
+//Push a function to repository
+func Push(arg PushOptions) error {
 
 	var services stack.Services
-	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
-		if err != nil {
-			return err
-		}
+	if arg.Services != nil {
+		services = *arg.Services
+	} else {
+		if len(yamlFile) > 0 {
+			parsedServices, err := stack.ParseYAMLFile(arg.YamlFile, arg.Regex, arg.Filter)
+			if err != nil {
+				return err
+			}
 
-		if parsedServices != nil {
-			services = *parsedServices
+			if parsedServices != nil {
+				services = *parsedServices
+			}
 		}
 	}
 
 	if len(services.Functions) > 0 {
-		pushStack(&services, parallel)
+		pushStack(&services, arg.Parallel)
 	} else {
 		return fmt.Errorf("you must supply a valid YAML file")
 	}

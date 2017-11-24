@@ -8,6 +8,7 @@ import (
 	"regexp"
 
 	"github.com/spf13/cobra"
+	"github.com/openfaas/faas-cli/options"
 )
 
 const (
@@ -60,15 +61,11 @@ Currently supported verbs: %v`, supportedVerbs)
 }
 
 func runTemplatePull(cmd *cobra.Command, args []string) {
-	repository := ""
-	if len(args) > 1 {
-		repository = args[1]
+	if len(args) > 0 {
+		repository = args[0]
 	}
-
-	fmt.Println("Fetch templates from repository: " + repository)
-	if err := fetchTemplates(repository, overwrite); err != nil {
-		fmt.Println(err)
-
-		os.Exit(1)
-	}
+	Pull(options.TemplatePullOptions{
+		URL: repository,
+		Overwrite: overwrite,
+	})
 }
