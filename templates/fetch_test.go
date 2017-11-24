@@ -25,7 +25,6 @@ func Test_PullTemplates(t *testing.T) {
 		t.Error(err)
 	}
 
-	tearDownFetchTemplates(t)
 }
 
 func Test_fetchTemplates(t *testing.T) {
@@ -42,7 +41,6 @@ func Test_fetchTemplates(t *testing.T) {
 		t.Error(err)
 	}
 
-	tearDownFetchTemplates(t)
 }
 
 // tearDownFetchTemplates cleans all files and directories created by the test
