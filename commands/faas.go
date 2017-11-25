@@ -38,6 +38,13 @@ var stat = func(filename string) (os.FileInfo, error) {
 	return os.Stat(filename)
 }
 
+// TODO: remove this workaround once these vars are no longer global
+func resetForTest() {
+	yamlFile = ""
+	regex = ""
+	filter = ""
+}
+
 func getFaasOptions() options.FaasOptions {
 	return options.FaasOptions{
 		YamlFile: yamlFile,
