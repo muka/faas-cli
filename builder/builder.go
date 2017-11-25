@@ -63,8 +63,8 @@ func BuildImage(image string, handler string, functionName string, language stri
 // createBuildTemplate creates temporary build folder to perform a Docker build with language template
 func createBuildTemplate(functionName string, handler string, language string) string {
 	tempPath := filepath.Join(
-		os.Getenv("workdir"),
-		"./build",
+		template.GetWorkDirectory(),
+		"build",
 		functionName,
 	)
 
@@ -85,7 +85,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	}
 
 	// Drop in directory tree from template
-	CopyFiles(filepath.Join(os.Getenv("workdir"), "./template", language), tempPath, true)
+	CopyFiles(filepath.Join(template.GetTemplateDirectory(), language), tempPath, true)
 
 	// Overlay in user-function
 	CopyFiles(handler, functionPath, true)
@@ -244,7 +244,7 @@ func BuildStack(services *stack.Services, queueDepth int, nocache bool, squash b
 // PullTemplates pulls templates from Github from the master zip download file.
 func PullTemplates(templateURL string) error {
 	var err error
-	exists, err := os.Stat(filepath.Join(os.Getenv("workdir"), "./template"))
+	exists, err := os.Stat(filepath.Join(template.GetTemplateDirectory()))
 	if err != nil || exists == nil {
 		log.Println("No templates found in current directory.")
 

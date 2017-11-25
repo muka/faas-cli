@@ -37,15 +37,15 @@ var listCmd = &cobra.Command{
 func runList(cmd *cobra.Command, args []string) error {
 
 	functions, err := api.List(options.ListOptions{
-		SharedOptions: options.SharedOptions{
-			Gateway:gateway,
-		},
+		FaasOptions: getFaasOptions(),
+		SharedOptions: getSharedOptions(),
 		VerboseList:verboseList,
 	})
-	
+
 	if err != nil {
 		return err
 	}
+
 	if verboseList {
 		fmt.Printf("%-30s\t%-40s\t%-15s\t%-5s\n", "Function", "Image", "Invocations", "Replicas")
 		for _, function := range functions {

@@ -85,14 +85,8 @@ via flags. Note: --replace and --update are mutually exclusive.`,
 
 func runDeploy(cmd *cobra.Command, args []string) error {
 	dargs := options.DeployOptions{
-		FaasOptions: options.FaasOptions{
-			YamlFile: yamlFile,
-			Regex: regex,
-			Filter: filter,
-		},
-		SharedOptions: options.SharedOptions{
-			Network: network,
-		},
+		FaasOptions: getFaasOptions(),
+		SharedOptions: getSharedOptions(),
 		EnvvarOpts:  envvarOpts,
 		Replace:     replace,
 		Update:      update,

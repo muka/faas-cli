@@ -5,10 +5,13 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
 	"github.com/openfaas/faas-cli/api"
+	"github.com/openfaas/faas-cli/api/template"
+	"github.com/openfaas/faas-cli/options"
 	"github.com/spf13/cobra"
 )
 
@@ -33,6 +36,26 @@ var (
 
 var stat = func(filename string) (os.FileInfo, error) {
 	return os.Stat(filename)
+}
+
+func getFaasOptions() options.FaasOptions {
+	return options.FaasOptions{
+		YamlFile: yamlFile,
+		Regex:    regex,
+		Filter:   filter,
+		WorkDir:  workDir,
+	}
+}
+
+func getSharedOptions() options.SharedOptions {
+	return options.SharedOptions{
+		Network:      network,
+		Image:        image,
+		Handler:      handler,
+		FunctionName: functionName,
+		Language:     language,
+		Gateway:      gateway,
+	}
 }
 
 func init() {
@@ -74,6 +97,14 @@ var faasCmd = &cobra.Command{
 	Short: "Manage your OpenFaaS functions from the command line",
 	Long: `
 Manage your OpenFaaS functions from the command line`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+
+		err := template.SetWorkDirectory(workDir)
+		if err != nil {
+			log.Fatalf("Failed to set working directory: %s", err.Error())
+		}
+
+	},
 	Run: runFaas,
 }
 

@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 	"github.com/openfaas/faas-cli/api"
+	"github.com/openfaas/faas-cli/api/template"
 	"github.com/openfaas/faas-cli/options"
 )
 
@@ -99,14 +100,13 @@ func Test_templatePull_error_not_valid_url(t *testing.T) {
 
 // httpTestServer returns a testing http server
 func httpTestServer(t *testing.T) *httptest.Server {
-	const sampleMasterZipPath string = "testdata/master_test.zip"
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		if _, err := os.Stat(sampleMasterZipPath); os.IsNotExist(err) {
+		if _, err := os.Stat(testdataPath); os.IsNotExist(err) {
 			t.Error(err)
 		}
 
-		fileData, err := ioutil.ReadFile(sampleMasterZipPath)
+		fileData, err := ioutil.ReadFile(testdataPath)
 		if err != nil {
 			t.Error(err)
 		}
@@ -179,11 +179,12 @@ func tearDown_fetch_templates(t *testing.T) {
 		}
 	}
 
+	templateDir := template.GetTemplateDirectory()
 	// Remove existing templates folder, if it exist
-	if _, err := os.Stat("template/"); err == nil {
+	if _, err := os.Stat(templateDir); err == nil {
 		t.Log("Found a template/ directory, removing it...")
 
-		rerr := os.RemoveAll("template/")
+		rerr := os.RemoveAll(templateDir)
 		if rerr != nil {
 			t.Log(rerr)
 		}

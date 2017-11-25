@@ -64,18 +64,8 @@ via flags.`,
 
 func runBuild(cmd *cobra.Command, args []string) error {
 	bargs := options.BuildOptions{
-		FaasOptions: options.FaasOptions{
-			YamlFile: yamlFile,
-			Regex: regex,
-			Filter: filter,
-		},
-		SharedOptions: options.SharedOptions{
-			Network: network,
-			Image: image,
-			Handler: handler,
-			FunctionName: functionName,
-			Language: language,
-		},
+		FaasOptions: getFaasOptions(),
+		SharedOptions: getSharedOptions(),
 		Nocache: nocache,
 		Squash: squash,
 		Parallel: parallel,

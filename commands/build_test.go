@@ -8,6 +8,8 @@ import (
 )
 
 func Test_build(t *testing.T) {
+	
+	defer tearDown_fetch_templates(t)
 
 	aTests := [][]string{
 		{"build"},

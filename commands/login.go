@@ -76,9 +76,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	fmt.Println("Calling the OpenFaaS server to validate the credentials...")
 
 	return api.Login(options.LoginOptions{
-		SharedOptions: options.SharedOptions {
-			Gateway: gateway,
-		},
+		SharedOptions: getSharedOptions(),
 		Username: username,
 		Password: password,
 	})

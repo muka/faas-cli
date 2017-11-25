@@ -41,9 +41,9 @@ var invokeCmd = &cobra.Command{
 
 func runInvoke(cmd *cobra.Command, args []string) error {
 
-	functionName := ""
+	function := ""
 	if len(args) > 0 {
-		functionName = args[0]
+		function = args[0]
 	}
 
 	stat, _ := os.Stdin.Stat()
@@ -57,17 +57,11 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	}
 
 	response, err := api.Invoke(options.InvokeOptions{
-		FaasOptions: options.FaasOptions {
-			YamlFile: yamlFile,
-			Regex: regex,
-			Filter: filter,
-		},
-		SharedOptions: options.SharedOptions {
-			Gateway: gateway,
-		},
+		FaasOptions: getFaasOptions(),
+		SharedOptions: getSharedOptions(),
 		ContentType: contentType,
 		Query: query,
-		FunctionName: functionName,
+		FunctionName: function,
 		Input: functionInput,
 	})
 

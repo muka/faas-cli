@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/openfaas/faas-cli/api/template"
 	"github.com/openfaas/faas-cli/options"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
@@ -258,7 +259,7 @@ func compileEnvironment(envvarOpts []string, yamlEnvironment map[string]string, 
 func deriveFprocess(function stack.Function) (string, error) {
 	var fprocess string
 
-	pathToTemplateYAML := filepath.Join(os.Getenv("workdir"), "template", function.Language, "template.yml")
+	pathToTemplateYAML := filepath.Join(template.GetTemplateDirectory(), function.Language, "template.yml")
 	if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
 		return "", err
 	}

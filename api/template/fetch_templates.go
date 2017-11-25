@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,9 +24,31 @@ const (
 	rootLanguageDirSplitCount = 3
 )
 
+const defaultWorkDir = "./"
+
+var workDir string
+
+//SetWorkDirectory set the work directory used to store files
+func SetWorkDirectory(dir string) error {
+	path, err := filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+	workDir = path
+	return nil
+}
+
+//GetWorkDirectory return the work directory used to store files
+func GetWorkDirectory() string {
+	if len(workDir) > 0 {
+		return workDir
+	}
+	return defaultWorkDir
+}
+
 //GetTemplateDirectory return the template directory
 func GetTemplateDirectory() string {
-	return filepath.Join(os.Getenv("workdir"), "./template/")
+	return filepath.Join(GetWorkDirectory(), "template")
 }
 
 type extractAction int
@@ -37,14 +60,14 @@ const (
 	skipWritingData
 )
 
-// FetchTemplates fetch code templates from GitHub master zip file.
+// FetchTemplates fetch code templates from a remote URL.
 func FetchTemplates(templateURL string, overwrite bool) error {
 
 	if len(templateURL) == 0 {
 		templateURL = defaultTemplateRepository
 	}
 
-	archive, err := fetchMasterZip(templateURL)
+	archive, err := fetchMasterZip(templateURL, GetWorkDirectory())
 	if err != nil {
 		removeArchive(archive)
 		return err
@@ -64,8 +87,11 @@ func FetchTemplates(templateURL string, overwrite bool) error {
 	log.Printf("Fetched %d template(s) : %v from %s\n", len(fetchedLanguages), fetchedLanguages, templateURL)
 
 	err = removeArchive(archive)
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 // expandTemplatesFromZip builds a list of languages that: already exist and
@@ -77,10 +103,11 @@ func expandTemplatesFromZip(archivePath string, overwrite bool) ([]string, []str
 	availableLanguages := make(map[string]bool)
 
 	zipFile, err := zip.OpenReader(archivePath)
-
 	if err != nil {
+		log.Fatal(err)
 		return nil, nil, err
 	}
+
 	defer zipFile.Close()
 
 	for _, z := range zipFile.File {
@@ -91,9 +118,11 @@ func expandTemplatesFromZip(archivePath string, overwrite bool) ([]string, []str
 			continue
 		}
 
-		action, language, isDirectory := canExpandTemplateData(availableLanguages, relativePath, overwrite)
+		absolutePath := filepath.Join(GetWorkDirectory(), relativePath)
 
-		relativePath = filepath.Join(os.Getenv("workdir"), relativePath)
+		// We know that this path is a directory if the last character is a "/"
+		isDirectory := strings.HasSuffix(relativePath, "/")
+		action, language := canExpandTemplateData(availableLanguages, absolutePath, overwrite, isDirectory)
 
 		var expandFromZip bool
 
@@ -121,13 +150,13 @@ func expandTemplatesFromZip(archivePath string, overwrite bool) ([]string, []str
 			}
 			defer rc.Close()
 
-			if err = createPath(relativePath, z.Mode()); err != nil {
+			if err = createPath(absolutePath, z.Mode()); err != nil {
 				break
 			}
 
 			// If relativePath is just a directory, then skip expanding it.
-			if len(relativePath) > 1 && !isDirectory {
-				if err = writeFile(rc, z.UncompressedSize64, relativePath, z.Mode()); err != nil {
+			if len(absolutePath) > 1 && !isDirectory {
+				if err = writeFile(rc, z.UncompressedSize64, absolutePath, z.Mode()); err != nil {
 					return nil, nil, err
 				}
 			}
@@ -139,111 +168,88 @@ func expandTemplatesFromZip(archivePath string, overwrite bool) ([]string, []str
 
 // canExpandTemplateData returns what we should do with the file in form of ExtractAction enum
 // with the language name and whether it is a directory
-func canExpandTemplateData(availableLanguages map[string]bool, relativePath string, overwrite bool) (extractAction, string, bool) {
-	if pathSplit := strings.Split(relativePath, "/"); len(pathSplit) > 2 {
-		language := pathSplit[1]
+func canExpandTemplateData(availableLanguages map[string]bool, absolutePath string, overwrite bool, isDirectory bool) (extractAction, string) {
 
-		// We know that this path is a directory if the last character is a "/"
-		isDirectory := strings.HasSuffix(relativePath, "/")
+	relativePath := absolutePath[len(GetWorkDirectory())+1:]
+
+	if isDirectory {
+		relativePath += "/"
+	}
+
+	if pathSplit := strings.Split(relativePath, "/"); len(pathSplit) > 2 {
+
+		language := pathSplit[1]
 
 		// Check if this is the root directory for a language (at ./template/lang)
 		if len(pathSplit) == rootLanguageDirSplitCount && isDirectory {
 			if !canWriteLanguage(availableLanguages, language, overwrite) {
-				return directoryAlreadyExists, language, isDirectory
+				return directoryAlreadyExists, language
 			}
-			return newTemplateFound, language, isDirectory
+			return newTemplateFound, language
 		}
 
 		if canWriteLanguage(availableLanguages, language, overwrite) == false {
-			return skipWritingData, language, isDirectory
+			return skipWritingData, language
 		}
 
-		return shouldExtractData, language, isDirectory
+		return shouldExtractData, language
 	}
 	// template/
-	return skipWritingData, "", true
-}
-
-// removeArchive removes the given file
-func removeArchive(archive string) error {
-	log.Printf("Cleaning up zip file...")
-	var err error
-
-	if _, err = os.Stat(archive); err == nil {
-		err = os.Remove(archive)
-	}
-
-	return err
+	return skipWritingData, ""
 }
 
 // fetchMasterZip downloads a zip file from a repository URL
-func fetchMasterZip(templateURL string) (string, error) {
+func fetchMasterZip(templateBaseURL, destinationPath string) (string, error) {
 	var err error
 
-	templateURL = strings.TrimRight(templateURL, "/")
-	templateURL = templateURL + "/archive/master.zip"
-	archive := filepath.Join(os.Getenv("workdir"), "master.zip")
-
-	if _, err := os.Stat(archive); err != nil {
-		timeout := 120 * time.Second
-		client := proxy.MakeHTTPClient(&timeout)
-
-		req, err := http.NewRequest(http.MethodGet, templateURL, nil)
-		if err != nil {
-			return "", err
-		}
-
-		log.Printf("HTTP GET %s\n", templateURL)
-		res, err := client.Do(req)
-		if err != nil {
-			return "", err
-		}
-
-		if res.StatusCode != http.StatusOK {
-			err := fmt.Errorf(fmt.Sprintf("%s is not valid, status code %d", templateURL, res.StatusCode))
-			log.Println(err.Error())
-			return "", err
-		}
-
-		if res.Body != nil {
-			defer res.Body.Close()
-		}
-
-		bytesOut, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return "", err
-		}
-
-		log.Printf("Writing %dKb to %s\n", len(bytesOut)/1024, archive)
-		err = ioutil.WriteFile(archive, bytesOut, 0700)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	fmt.Println("")
-	return archive, err
-}
-
-func writeFile(rc io.ReadCloser, size uint64, relativePath string, perms os.FileMode) error {
-	var err error
-
-	defer rc.Close()
-	f, err := os.OpenFile(relativePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perms)
+	templateURL, err := url.Parse(templateBaseURL)
 	if err != nil {
-		return err
+		return "", err
 	}
-	defer f.Close()
-	_, err = io.CopyN(f, rc, int64(size))
+	templateURL.Path = filepath.Join(templateURL.Path, "/archive/master.zip")
 
-	return err
-}
+	archive := filepath.Join(destinationPath, "master.zip")
 
-func createPath(relativePath string, perms os.FileMode) error {
-	dir := filepath.Dir(relativePath)
-	//HACK using 0755 to avoid weird permission errors
-	err := os.MkdirAll(dir, 0755)
-	return err
+	if _, serr := os.Stat(archive); serr == nil {
+		removeArchive(archive)
+	}
+
+	timeout := 120 * time.Second
+	client := proxy.MakeHTTPClient(&timeout)
+
+	req, rerr := http.NewRequest(http.MethodGet, templateURL.String(), nil)
+	if rerr != nil {
+		return "", rerr
+	}
+
+	log.Printf("HTTP GET %s\n", templateURL)
+	res, derr := client.Do(req)
+	if derr != nil {
+		return "", derr
+	}
+
+	if res.StatusCode != http.StatusOK {
+		ferr := fmt.Errorf(fmt.Sprintf("%s is not valid, status code %d", templateURL, res.StatusCode))
+		log.Println(ferr.Error())
+		return "", ferr
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	bytesOut, rerr := ioutil.ReadAll(res.Body)
+	if rerr != nil {
+		return "", rerr
+	}
+
+	log.Printf("Writing %dKb to %s\n", len(bytesOut)/1024, archive)
+	err = ioutil.WriteFile(archive, bytesOut, 0700)
+	if err != nil {
+		return "", err
+	}
+
+	return archive, err
 }
 
 // canWriteLanguage tells whether the language can be expanded from the zip or not.
@@ -260,14 +266,4 @@ func canWriteLanguage(availableLanguages map[string]bool, language string, overw
 	}
 
 	return canWrite
-}
-
-// Takes a language input (e.g. "node"), tells whether or not it is OK to download
-func templateFolderExists(language string, overwrite bool) bool {
-	dir := filepath.Join(GetTemplateDirectory(), language)
-	if _, err := os.Stat(dir); err == nil && !overwrite {
-		// The directory template/language/ exists
-		return false
-	}
-	return true
 }
